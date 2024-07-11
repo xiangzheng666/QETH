@@ -6,3 +6,6 @@
 
 # 不忽略任何目录，这行很重要，因为它会确保目录结构得以保留
 !/*
+
+!/evaldataset/txt/*
+!/evaldataset/txt2/*

@@ -38,7 +38,7 @@ from tqdm import tqdm
 cpu_cont = multiprocessing.cpu_count()
 from transformers import RobertaConfig, RobertaModel, RobertaTokenizer
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
 class InputFeatures(object):
     """A single training/test features for a example."""

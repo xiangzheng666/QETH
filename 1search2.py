@@ -179,7 +179,7 @@ def test(model, tokenizer,test_file,predict_save_file):
             js['idx']=index
             js['answers']=[]
             js["score"] = []
-            for idx in sort_id[:50]:
+            for idx in sort_id[:100]:
                 js['answers'].append(int(indexs[idx]))
                 js['score'].append(float(scores[index, idx]))
             f.write(json.dumps(js)+'\n')

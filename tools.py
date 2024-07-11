@@ -152,9 +152,5 @@ def get_result(work_path,flag=True):
 print(source_vecs.shape)
 
 
-
 # get_result("result/codebertpredictions_qurey_single_1.jsonl")
-get_result("result/codebertpredictions_code_desc_1.jsonl")
-
-# get_result("result/graphcodebertpredictions_qurey_single_1.jsonl")
-get_result("result/graphcodebertpredictions_code_desc_1.jsonl")
+get_result("out/codebertpredictions_code_desc.jsonl")

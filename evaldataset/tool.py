@@ -4,7 +4,7 @@ import nltk
 
 from nltk.corpus import wordnet as wn
 
-def getnn(sentence):
+def getnn(sentence,TAG):
     tokens = nltk.word_tokenize(sentence)
     tagged = nltk.pos_tag(tokens)
     index = [0 for i in range(len(tagged))]
@@ -12,14 +12,21 @@ def getnn(sentence):
     for i in range(len(tagged)):
         # if "NN" in tagged[i][1]
         tmp = tagged[i]
-        if "NN" in tmp[1] or "JJ" in tmp[1]:
-            index[i] = 1
+        if TAG=='NN':
+            if "NN" in tmp[1] or "JJ" in tmp[1]:
+                index[i] = 1
+        if TAG=='VB':
+            if "VB" in tmp[1]:
+                index[i] = 1
+        if TAG=='ALL':
+            if "NN" in tmp[1] or "JJ" in tmp[1] or "VB" in tmp[1]:
+                index[i] = 1
     return sentence,index
 
-def getSimilarity(qurey,source):
+def getSimilarity(qurey,source,TAG):
 
-    qurey,qureyindex = getnn(qurey)
-    source, sourceindex = getnn(source)
+    qurey,qureyindex = getnn(qurey,TAG)
+    source, sourceindex = getnn(source,TAG)
 
     for q in range(len(qurey)):
         if(qureyindex[q]==0):
@@ -60,13 +67,17 @@ with open('qurey.txt','r') as f:
     qurey = f.read().split('\n')
 
 data=[]
-
+data_NN=[]
+data_VB=[]
+data_ALL=[]
 from tqdm import tqdm
 
 with open('desc.jsonl','r') as f:
     for line in tqdm(f.readlines()):
         tmp = []
-        tmp2 = []
+        tmp_nn = []
+        tmp_vb = []
+        tmp_all = []
         js=json.loads(line)
         q = qurey[js["idx"]].lower()
         answers = js['answers']
@@ -75,13 +86,38 @@ with open('desc.jsonl','r') as f:
             if len(tmp)==3:
                 break
             if source[int(i)] not in tmp:
+                tmp.append(source[int(i)].lower())
                 if float(score)>=90:
-                    tmp.append(source[int(i)].lower())
+                    tmp_nn.append(source[int(i)].lower())
+                    tmp_vb.append(source[int(i)].lower())
+                    tmp_all.append(source[int(i)].lower())
                 else:
                     s = source[int(i)].lower()
-                    s = getSimilarity(q,s)
-                    tmp.append(" ".join(s))
-        data.append('<seq>'.join(tmp))
+                    tmp_nn.append(" ".join(getSimilarity(q,s,'NN')))
+                    tmp_vb.append(" ".join(getSimilarity(q,s,'VB')))
+                    tmp_all.append(" ".join(getSimilarity(q,s,'ALL')))
 
-with open('siqe_source.txt','w') as f:
+        data.append('<seq>'.join(tmp))
+        data_NN.append('<seq>'.join(tmp_nn))
+        data_VB.append('<seq>'.join(tmp_vb))
+        data_ALL.append('<seq>'.join(tmp_all))
+
+with open('txt/siqe_source_single.txt','w') as f:
     f.write('\n'.join(data))
+with open('txt2/siqe_source_merger.txt','w') as f:
+    f.write('\n'.join(data))
+
+with open('txt/siqe_source_NN_single.txt','w') as f:
+    f.write('\n'.join(data_NN))
+with open('txt2/siqe_source_NN_merger.txt','w') as f:
+    f.write('\n'.join(data_NN))
+
+with open('txt/siqe_source_VB_single.txt','w') as f:
+    f.write('\n'.join(data_VB))
+with open('txt2/siqe_source_VB_merger.txt','w') as f:
+    f.write('\n'.join(data_VB))
+
+with open('txt/siqe_source_ALL_single.txt','w') as f:
+    f.write('\n'.join(data_ALL))
+with open('txt2/siqe_source_ALL_merger.txt','w') as f:
+    f.write('\n'.join(data_ALL))

@@ -155,6 +155,16 @@ def get_result_from_path(work_path="result",flag=True):
             f.write("Xglu-top5: "+scores['top5']+"\n")
             f.write("Xglu-top1: "+scores['top1']+"\n")
 
+            answers = read_answers(predict_save_file, 31396, 53572)
+            predictions,score_tmp = read_predictions1(predict_save_file, 31396, 53572)
+            scores = calculate_scores(answers, predictions,score_tmp)
+            f.write("CSN-TEST-MRR: "+scores['MRR']+"\n")
+            f.write("CSN-TEST-ndcg10: "+scores['ndcg10']+"\n")
+            f.write("CSN-TEST-aroma: "+scores['aroma']+"\n")
+            f.write("CSN-TEST-top10: "+scores['top10']+"\n")
+            f.write("CSN-TEST-top5: "+scores['top5']+"\n")
+            f.write("CSN-TEST-top1: "+scores['top1']+"\n")
+
             
 
     

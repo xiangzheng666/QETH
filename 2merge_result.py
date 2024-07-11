@@ -7,183 +7,6 @@ import logging
 import sys,json
 import pandas as pd
 from tqdm import tqdm
-def read_answers(filename,start,end):
-    answers={}
-    with open(filename) as f:
-        for line in f.read().split("\n")[start:end]:
-            line=line.strip()
-            js=json.loads(line)
-            answers[js['idx']]=js['idx']
-    return answers
-
-def read_predictions(filename,start,end):
-    predictions={}
-    scores={}
-    with open(filename) as f:
-        for line in f.read().split("\n")[start:end]:
-            line=line.strip()
-            js=json.loads(line)
-            predictions[js['idx']]=js['answers']
-            scores[js["idx"]]=js['score']
-    return predictions,scores
-
-def read_predictions1(filename,start,end):
-    predictions={}
-    scores={}
-    with open(filename) as f:
-        for line in f.read().split("\n")[start:end]:
-            line=line.strip()
-            js=json.loads(line)
-            answers_tmp = []
-            scores_tmp = []
-            for ans,sco in zip(js['answers'],js['score']):
-                if ans >= start and ans<end:
-                    answers_tmp.append(ans)
-                    scores_tmp.append(sco)
-            predictions[js['idx']]=answers_tmp
-            scores[js["idx"]]=scores_tmp
-    return predictions,scores
-
-def calculate_scores(answers,predictions,score):
-    scores=[]
-    top10=[]
-    top5=[]
-    top1=[]
-    for key in answers:
-        if key not in predictions:
-            logging.error("Missing prediction for url {}.".format(key))
-            sys.exit()
-        flag=False
-        for rank,idx in enumerate(predictions[key]):
-            if idx==answers[key]:
-                if(rank<10):
-                    top10.append(1)
-                if(rank<5):
-                    top5.append(1)
-                if(rank<1):
-                    top1.append(1)
-                sc = score[key][rank]
-                tmp = rank
-                while(tmp>0 and score[key][tmp]==sc):
-                    tmp =tmp-1
-                scores.append(1/(tmp+1))
-                flag=True
-                break
-        if flag is False:
-            scores.append(0)
-    result={}
-    result['MRR']=round(float(numpy.mean(scores)),4)
-    result['top10']=round(sum(top10)/len(answers),4)
-    result['top5']=round(sum(top5)/len(answers),4)
-    result['top1']=round(sum(top1)/len(answers),4)
-    return result
-
-def get_result_from_path(path="result",flag=True):
-    if(flag):
-        paths = []
-        cs = []
-        ex = []
-        ADV = []
-        CSN = []
-        WEB = []
-        data4 = [] 
-        for jsonl in os.listdir(path):
-            name = jsonl.split(".")[0]
-            cs.append(name.split("_")[0])
-            ex.append("_".join(name.split("_")[1:]))
-            predict_save_file = path+"/"+jsonl
-            answers = read_answers(predict_save_file,0,10020)
-            predictions,score_tmp = read_predictions1(predict_save_file,0,10020)
-            scores = calculate_scores(answers, predictions,score_tmp)
-            ADV.append(scores["MRR"])
-            answers = read_answers(predict_save_file, 10020, 10119)
-            predictions,score_tmp = read_predictions1(predict_save_file, 10020, 10119)
-            scores = calculate_scores(answers, predictions,score_tmp)
-            CSN.append(scores["MRR"])
-            answers = read_answers(predict_save_file, 10119, 10642)
-            predictions,score_tmp = read_predictions1(predict_save_file, 10119, 10642)
-            scores = calculate_scores(answers, predictions,score_tmp)
-            WEB.append(scores["MRR"])
-            answers = read_answers(predict_save_file, 10642, 31396)
-            predictions,score_tmp = read_predictions1(predict_save_file, 10642, 31396)
-            scores = calculate_scores(answers, predictions,score_tmp)
-            data4.append(scores["MRR"])
-            paths.append(path)
-            print(name)
-            print("    ", "ADV:", ADV[-1], "CSN:", CSN[-1], "WEB:", WEB[-1], "data4:", data4[-1])
-        return {
-            "cs":cs,
-            "ex":ex,
-            "ADV":ADV,
-            "CSN": CSN,
-            "WEB": WEB,
-            "data4": data4,
-            "paths": paths,
-        }
-    else:
-        paths = []
-        cs = []
-        ex = []
-        mrr = [] 
-        for jsonl in os.listdir(path):
-            name = jsonl.split(".")[0]
-            cs.append(name.split("_")[0])
-            ex.append("_".join(name.split("_")[1:]))
-            predict_save_file = path+"/"+jsonl
-            answers = read_answers(predict_save_file,0,31396)
-            predictions,score_tmp = read_predictions(predict_save_file,0,31396)
-            scores = calculate_scores(answers, predictions,score_tmp)
-            mrr.append(scores["MRR"])
-            paths.append(path)
-            print(name)
-            print("    ", "mrr:", mrr[-1])
-        return {
-            "cs":cs,
-            "ex":ex,
-            "mrr": mrr,
-            "paths": paths,
-        }
-
-def getsortscorelist():
-    jsonls = [i.split(".")[0] for i in os.listdir("evaldataset/jsonl")]
-
-    resultdata = get_result_from_path("result",False)
-    
-    df = pd.DataFrame(resultdata)
-
-    all = []
-    mrr = []
-    for i in range(len(tqdm(df))):
-        MRR = df.loc[i, "mrr"]
-        js = {}
-        js["MRR"] = MRR
-        all.append(js)
-        mrr.append(MRR)
-        
-    df["all"] = all
-    df["mrr"] = mrr
-
-    ax = df[df['cs'] == "graphcodebertpredictions"][["mrr", "ex"]].sort_values(by="mrr", ascending=False)
-    l = ax["ex"].tolist()
-
-    graphcodebert = []
-    for i in l:
-        k = jsonls.index(i)
-        graphcodebert.append(k)
-    print(graphcodebert)
-
-    ax = df[df['cs'] == "codebertpredictions"][["mrr", "ex"]].sort_values(by="mrr", ascending=False)
-    l = ax["ex"].tolist()
-
-    codebert = []
-    for i in l:
-        if i in jsonls:
-            k = jsonls.index(i)
-            codebert.append(k)
-   
-    print(codebert)
-
-    return codebert, graphcodebert
 
 def getjson(file_path):
     data = []
@@ -215,11 +38,11 @@ def mergergraphcodebert(num=10, sortlist=None):
             for i in tqdm(range(len(query))):
                 js = {}
                 idx = query[i]['idx']
-                answers = query[i]['answers'][:50]
-                score = query[i]['score'][:50]
+                answers = query[i]['answers'][:100]
+                score = query[i]['score'][:100]
                 for p in path[:num]:
-                    answers = answers + p[i]['answers'][:50]
-                    score = score + p[i]['score'][:50]
+                    answers = answers + p[i]['answers'][:100]
+                    score = score + p[i]['score'][:100]
 
                 answers = numpy.array(answers)
                 score = numpy.array(score)
@@ -262,11 +85,11 @@ def mergercodebert(num=10, sortlist=None):
             for i in tqdm(range(len(query))):
                 js = {}
                 idx = query[i]['idx']
-                answers = query[i]['answers'][:50]
-                score = query[i]['score'][:50]
+                answers = query[i]['answers'][:100]
+                score = query[i]['score'][:100]
                 for p in path[:num]:
-                    answers = answers + p[i]['answers'][:50]
-                    score = score + p[i]['score'][:50]
+                    answers = answers + p[i]['answers'][:100]
+                    score = score + p[i]['score'][:100]
                 answers = numpy.array(answers)
                 score = numpy.array(score)
                 tmp = numpy.argsort(score)
@@ -304,11 +127,11 @@ def mergergraphcodebertjsonl2():
             for i in tqdm(range(len(query))):
                 js = {}
                 idx = query[i]['idx']
-                answers = query[i]['answers'][:50]
-                score = query[i]['score'][:50]
+                answers = query[i]['answers'][:100]
+                score = query[i]['score'][:100]
                 for p in path:
-                    answers = answers + p[i]['answers'][:50]
-                    score = score + p[i]['score'][:50]
+                    answers = answers + p[i]['answers'][:100]
+                    score = score + p[i]['score'][:100]
 
                 answers = numpy.array(answers)
                 score = numpy.array(score)
@@ -347,11 +170,11 @@ def mergercodebertjsonl2():
             for i in tqdm(range(len(query))):
                 js = {}
                 idx = query[i]['idx']
-                answers = query[i]['answers'][:50]
-                score = query[i]['score'][:50]
+                answers = query[i]['answers'][:100]
+                score = query[i]['score'][:100]
                 for p in path:
-                    answers = answers + p[i]['answers'][:50]
-                    score = score + p[i]['score'][:50]
+                    answers = answers + p[i]['answers'][:100]
+                    score = score + p[i]['score'][:100]
 
                 answers = numpy.array(answers)
                 score = numpy.array(score)
@@ -393,19 +216,19 @@ def mergergraphcodebert_best(num=10, sortlist=None):
             for i in tqdm(range(len(query))):
                 js = {}
                 idx = query[i]['idx']
-                answers = query[i]['answers'][:50]
-                score = query[i]['score'][:50]
+                answers = query[i]['answers'][:100]
+                score = query[i]['score'][:100]
                 querymrr = 0
                 if idx in answers:
                     querymrr = 1/(answers.index(idx)+1)
                 for p in path[:num]:
                     mrr = 0
-                    if idx in p[i]['answers'][:50]:
-                        mrr = 1/(p[i]['answers'][:50].index(idx)+1)
+                    if idx in p[i]['answers'][:100]:
+                        mrr = 1/(p[i]['answers'][:100].index(idx)+1)
                     if(mrr>querymrr):
                         querymrr = mrr
-                        answers = p[i]['answers'][:50]
-                        score =  p[i]['score'][:50]
+                        answers = p[i]['answers'][:100]
+                        score =  p[i]['score'][:100]
                 js['idx'] = idx
                 js['answers'] = answers
                 js["score"] = score
@@ -432,19 +255,19 @@ def mergercodebert_best(num=10, sortlist=None):
             for i in tqdm(range(len(query))):
                 js = {}
                 idx = query[i]['idx']
-                answers = query[i]['answers'][:50]
-                score = query[i]['score'][:50]
+                answers = query[i]['answers'][:100]
+                score = query[i]['score'][:100]
                 querymrr = 0
                 if idx in answers:
                     querymrr = 1/(answers.index(idx)+1)
                 for p in path[:num]:
                     mrr = 0
-                    if idx in p[i]['answers'][:50]:
-                        mrr = 1/(p[i]['answers'][:50].index(idx)+1)
+                    if idx in p[i]['answers'][:100]:
+                        mrr = 1/(p[i]['answers'][:100].index(idx)+1)
                     if(mrr>querymrr):
                         querymrr = mrr
-                        answers = p[i]['answers'][:50]
-                        score =  p[i]['score'][:50]
+                        answers = p[i]['answers'][:100]
+                        score =  p[i]['score'][:100]
                 js['idx'] = idx
                 js['answers'] = answers
                 js["score"] = score
@@ -472,19 +295,19 @@ def mergercodebert_best_n(nums=10, sortlist=None):
             for i in tqdm(range(len(query))):
                 js = {}
                 idx = query[i]['idx']
-                answers = query[i]['answers'][:50]
-                score = query[i]['score'][:50]
+                answers = query[i]['answers'][:100]
+                score = query[i]['score'][:100]
                 querymrr = 0
                 if idx in answers:
                     querymrr = 1/(answers.index(idx)+1)
                 for p in path[:num]:
                     mrr = 0
-                    if idx in p[i]['answers'][:50]:
-                        mrr = 1/(p[i]['answers'][:50].index(idx)+1)
+                    if idx in p[i]['answers'][:100]:
+                        mrr = 1/(p[i]['answers'][:100].index(idx)+1)
                     if(mrr>querymrr):
                         querymrr = mrr
-                        answers = p[i]['answers'][:50]
-                        score =  p[i]['score'][:50]
+                        answers = p[i]['answers'][:100]
+                        score =  p[i]['score'][:100]
                 js['idx'] = idx
                 js['answers'] = answers
                 js["score"] = score
@@ -508,19 +331,19 @@ def mergercodebertjsonl2_bset():
             for i in tqdm(range(len(query))):
                 js = {}
                 idx = query[i]['idx']
-                answers = query[i]['answers'][:50]
-                score = query[i]['score'][:50]
+                answers = query[i]['answers'][:100]
+                score = query[i]['score'][:100]
                 querymrr = 0
                 if idx in answers:
                     querymrr = 1/(answers.index(idx)+1)
                 for p in path:
                     mrr = 0
-                    if idx in p[i]['answers'][:50]:
-                        mrr = 1/(p[i]['answers'][:50].index(idx)+1)
+                    if idx in p[i]['answers'][:100]:
+                        mrr = 1/(p[i]['answers'][:100].index(idx)+1)
                     if(mrr>querymrr):
                         querymrr = mrr
-                        answers = p[i]['answers'][:50]
-                        score =  p[i]['score'][:50]
+                        answers = p[i]['answers'][:100]
+                        score =  p[i]['score'][:100]
                 js['idx'] = idx
                 js['answers'] = answers
                 js["score"] = score
@@ -544,26 +367,26 @@ def mergergraphcodebertjsonl2_bset():
             for i in tqdm(range(len(query))):
                 js = {}
                 idx = query[i]['idx']
-                answers = query[i]['answers'][:50]
-                score = query[i]['score'][:50]
+                answers = query[i]['answers'][:100]
+                score = query[i]['score'][:100]
                 querymrr = 0
                 if idx in answers:
                     querymrr = 1/(answers.index(idx)+1)
                 for p in path:
                     mrr = 0
-                    if idx in p[i]['answers'][:50]:
-                        mrr = 1/(p[i]['answers'][:50].index(idx)+1)
+                    if idx in p[i]['answers'][:100]:
+                        mrr = 1/(p[i]['answers'][:100].index(idx)+1)
                     if(mrr>querymrr):
                         querymrr = mrr
-                        answers = p[i]['answers'][:50]
-                        score =  p[i]['score'][:50]
+                        answers = p[i]['answers'][:100]
+                        score =  p[i]['score'][:100]
                 js['idx'] = idx
                 js['answers'] = answers
                 js["score"] = score
                 f.write(json.dumps(js) + '\n')
 
 if __name__ == '__main__':
-    # codebert, graphcodebert = getsortscorelist()
+
     codebert = [i for i in range(len(os.listdir("evaldataset/jsonl")))]
     graphcodebert = [i for i in range(len(os.listdir("evaldataset/jsonl")))]
     

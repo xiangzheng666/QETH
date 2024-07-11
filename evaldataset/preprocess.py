@@ -17,7 +17,7 @@ def tojsonl(qureypath,name):
     
     length = len(nls[0])
 
-    for i in range(length):
+    for i in range(min(length,3)):
         if os.path.exists("jsonl/"+name+"_"+str(i+1)+".jsonl"):
             print("jsonl/"+name+"_"+str(i+1)+".jsonl" , " 已经存在")
             continue
