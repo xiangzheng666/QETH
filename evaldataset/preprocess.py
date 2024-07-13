@@ -17,21 +17,23 @@ def tojsonl(qureypath,name):
     
     length = len(nls[0])
 
-    for i in range(min(length,3)):
-        if os.path.exists("jsonl/"+name+"_"+str(i+1)+".jsonl"):
-            print("jsonl/"+name+"_"+str(i+1)+".jsonl" , " 已经存在")
+    for index_num in range(min(length,3)):
+        
+        if os.path.exists("jsonl/"+name+"_"+str(index_num+1)+".jsonl"):
+            print("jsonl/"+name+"_"+str(index_num+1)+".jsonl" , " 已经存在")
             continue
         data = []
         index = 0
+        print("jsonl/"+name+"_"+str(index_num+1)+".jsonl" , " 未存在，解析中")
         for nl, code in zip(nls, codes):
             data.append({
                 'idx': index,
                 'code_tokens': [i for i in code.split(" ") if i != ""],
-                'docstring_tokens': [i for i in nl[i].split(" ") if i != ""],
+                'docstring_tokens': [i for i in nl[index_num].split(" ") if i != ""],
             })
             index = index + 1
 
-        with open("jsonl/"+name+"_"+str(i+1)+".jsonl", 'w') as f:
+        with open("jsonl/"+name+"_"+str(index_num+1)+".jsonl", 'w') as f:
             writer = jsonlines.Writer(f)
             for item in data:
                 writer.write(item)
@@ -48,7 +50,7 @@ def tojsonl2(qureypath,name):
         print("jsonl2/"+name+".jsonl", " 已经存在")
         return
     length = len(nls[0])
-
+    print("jsonl2/"+name+".jsonl" , " 未存在，解析中")
     data = []
     index = 0
     for nl, code,q in zip(nls, codes,qurey):

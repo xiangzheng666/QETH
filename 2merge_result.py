@@ -391,21 +391,25 @@ if __name__ == '__main__':
     graphcodebert = [i for i in range(len(os.listdir("evaldataset/jsonl")))]
     
     # 将结果全局排序合并
+    print("将结果全局排序合并")
     mergergraphcodebert(10,graphcodebert)
     mergercodebert(10,codebert)
-
+ 
     # 将merger的结果全局排序合并
+    print("将merger的结果全局排序合并")
     mergercodebertjsonl2()
     mergergraphcodebertjsonl2()
     
     
     #测试最好结果影响
+    print("测试最好结果影响")
     mergergraphcodebert_best(10,graphcodebert)
     mergercodebert_best(10,codebert)
     mergercodebertjsonl2_bset()
     mergergraphcodebertjsonl2_bset()
-    
+
     #测试n对最好结果影响
-    # mergercodebert_best_n(10,codebert)
+    print("测试n对最好结果影响")
+    mergercodebert_best_n(3,codebert)
 
 

@@ -153,7 +153,7 @@ def get_result_from_path(work_path="result",flag=True):
             f.write("Xglu-aroma: "+scores['aroma']+"\n")
             f.write("Xglu-top10: "+scores['top10']+"\n")
             f.write("Xglu-top5: "+scores['top5']+"\n")
-            f.write("Xglu-top1: "+scores['top1']+"\n")
+            f.write("Xglu-top1: "+scores['top1']+"\n\n")
 
             answers = read_answers(predict_save_file, 31396, 53572)
             predictions,score_tmp = read_predictions1(predict_save_file, 31396, 53572)

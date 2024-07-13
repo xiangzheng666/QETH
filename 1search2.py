@@ -233,7 +233,11 @@ def testgraphcodebertdir():
 
 
 if __name__ == "__main__":
+    print("================graphcodebert search in json2================")
     testgraphcodebertdir()
+    print("================finsh graphcodebert search in json2================")
+    print("================codebert search in json2================")
     testcodebertdir()
+    print("================finsh codebert search in json2================")
 
 
